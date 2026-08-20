@@ -1,16 +1,32 @@
 {
   "lastUpdated": "August 20, 2026",
-
   "usCases": 46,
-  "usStates": ["Texas", "New Mexico"],
+  "usStates": [
+    "New Mexico",
+    "Texas"
+  ],
   "usStateCount": 2,
-
   "regionAnimalCases": "[VERIFY:185,000]",
   "regionHumanCases": "[VERIFY:2,263]",
-
-  "firstUsCase": "Zavala County, Texas — June 3, 2026",
-
-  "affectedCounties": ["Brewster", "Crockett", "Edwards", "Gillespie", "Jim Hogg", "La Salle", "Lea", "Medina", "Pecos", "Schleicher", "Starr", "Sutton", "Terrell", "Tom Green", "Uvalde", "Val Verde", "Zavala"],
-
+  "firstUsCase": "Zavala County, Texas \u2014 June 3, 2026",
+  "affectedCounties": [
+    "Brewster",
+    "Crockett",
+    "Edwards",
+    "Gillespie",
+    "Jim Hogg",
+    "La Salle",
+    "Lea",
+    "Medina",
+    "Pecos",
+    "Schleicher",
+    "Starr",
+    "Sutton",
+    "Terrell",
+    "Tom Green",
+    "Uvalde",
+    "Val Verde",
+    "Zavala"
+  ],
   "sterilePupaePerWeek": "[VERIFY:100M+]"
 }
