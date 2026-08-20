@@ -73,5 +73,9 @@ jobs:
       - name: Fail job if the scrape was degraded
         if: steps.scrape.outcome == 'failure'
         run: |
-          echo "::error::Scraper reported a degraded parse (fetch succeeded, zero fields matched) — see the 'Run scraper' step log and the scrape-debug-html artifact."
+          if [ "${{ steps.scrape.outputs.parse_degraded }}" = "true" ]; then
+            echo "::error::Scraper reported a degraded parse (fetch succeeded, zero fields matched) — see the 'Run scraper' step log and the scrape-debug-html artifact."
+          else
+            echo "::error::Scraper step failed for a reason other than a degraded parse (parse_degraded=${{ steps.scrape.outputs.parse_degraded }}) — see the 'Run scraper' step log for the actual error."
+          fi
           exit 1
