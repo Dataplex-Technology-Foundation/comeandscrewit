@@ -1,0 +1,60 @@
+name: Weekly project rankings
+
+on:
+  schedule:
+    # 13:00 UTC every Monday.
+    - cron: "0 13 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: weekly-project-rankings
+  cancel-in-progress: false
+
+jobs:
+  rank:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run ranking script
+        run: python3 scripts/rank_projects.py
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet -- reference/nws-grand-challenge-rankings.md reference/nws-grand-challenge-rankings-history.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open pull request for review
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Automated weekly project rankings refresh"
+          branch: automation/project-rankings-refresh
+          delete-branch: true
+          title: "Automated project rankings refresh — ${{ github.run_id }}"
+          body: |
+            Regenerated `reference/nws-grand-challenge-rankings.md` from the
+            current state of `reference/nws-grand-challenge-tracker.md`, and
+            appended this week's top-5 lists to
+            `reference/nws-grand-challenge-rankings-history.json` for
+            trend-over-time tracking.
+
+            Rankings are derived signals (disclosed award size, and an
+            information-density proxy) — review before merging, same as any
+            other automated data update in this repo.
+          labels: automated-data-refresh
+          add-paths: |
+            reference/nws-grand-challenge-rankings.md
+            reference/nws-grand-challenge-rankings-history.json
