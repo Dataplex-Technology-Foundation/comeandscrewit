@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r scripts/requirements.txt
+          pip install pyyaml
+
+      - name: Compile-check Python scripts
+        run: python3 -m py_compile scripts/*.py
+
+      - name: Validate workflow YAML
+        run: |
+          python3 - <<'EOF'
+          import sys
+          import yaml
+          from pathlib import Path
+
+          failed = False
+          for path in sorted(Path(".github/workflows").glob("*.yml")):
+              try:
+                  yaml.safe_load(path.read_text())
+                  print(f"OK: {path}")
+              except yaml.YAMLError as exc:
+                  print(f"INVALID: {path}\n{exc}")
+                  failed = True
+          sys.exit(1 if failed else 0)
+          EOF
+
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
