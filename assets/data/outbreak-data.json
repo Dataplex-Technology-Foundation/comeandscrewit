@@ -1,0 +1,16 @@
+{
+  "lastUpdated": "[DATE]",
+
+  "usCases": "[VERIFY:32]",
+  "usStates": ["Texas", "New Mexico"],
+  "usStateCount": "[VERIFY:2]",
+
+  "regionAnimalCases": "[VERIFY:185,000]",
+  "regionHumanCases": "[VERIFY:2,263]",
+
+  "firstUsCase": "[VERIFY: Zavala County, Texas — June 3, 2026]",
+
+  "affectedCounties": ["Zavala", "Maverick", "La Salle"],
+
+  "sterilePupaePerWeek": "[VERIFY:100M+]"
+}
