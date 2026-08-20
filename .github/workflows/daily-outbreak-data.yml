@@ -28,6 +28,13 @@ jobs:
         run: pip install -r scripts/requirements.txt
 
       - name: Run scraper
+        id: scrape
+        # Continue past a failure: the script still writes every file it
+        # managed to produce before exiting non-zero on a degraded parse
+        # (see scripts/scrape_outbreak_data.py). We want that partial
+        # output PR'd for review AND the job to end red for visibility, so
+        # we capture the failure and re-raise it after the later steps run.
+        continue-on-error: true
         run: python3 scripts/scrape_outbreak_data.py
 
       - name: Check for changes
@@ -62,3 +69,9 @@ jobs:
           path: scratch/last-fetch-*.html
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Fail job if the scrape was degraded
+        if: steps.scrape.outcome == 'failure'
+        run: |
+          echo "::error::Scraper reported a degraded parse (fetch succeeded, zero fields matched) — see the 'Run scraper' step log and the scrape-debug-html artifact."
+          exit 1

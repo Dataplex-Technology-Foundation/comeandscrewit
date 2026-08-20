@@ -144,7 +144,15 @@ def parse_confirmed_cases(html):
         return result
 
     soup = BeautifulSoup(html, "lxml")
-    text = soup.get_text(" ", strip=True)
+    # Separate distinct tags' text with a newline rather than a space: a
+    # plain-space join lets unrelated capitalized words from adjacent
+    # elements bleed into the two-word county regex below (e.g. link text
+    # "...NWS Website" immediately followed by "Zavala County, Texas" in
+    # the next element would otherwise read as "Website Zavala County").
+    # Regex patterns below intentionally use a literal " " (not \s) for
+    # internal multi-word gaps so a newline boundary correctly blocks the
+    # match instead of bleeding across it.
+    text = soup.get_text("\n", strip=True)
 
     # Case count: look for "NN confirmed cases" or "NN cases" near "screwworm".
     case_match = re.search(r"(\d{1,4})\s+confirmed\s+cases", text, re.IGNORECASE)
@@ -166,8 +174,27 @@ def parse_confirmed_cases(html):
         result["usStates"] = found_states
         result["usStateCount"] = len(found_states)
 
-    # Counties: look for "<Name> County" patterns, dedup preserving order.
-    county_matches = re.findall(r"\b([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)\s+County\b", text)
+    # Counties: a bare "<Name> County" scan (previous approach) matches any
+    # county mention anywhere on the page — nav links, footer boilerplate,
+    # unrelated extension-office references — and silently produces a
+    # plausible-looking but wrong affected-counties list. Require the same
+    # kind of adjacency signal used for states above: "<Name> County,
+    # <State>" where <State> is one of the states this page actually
+    # confirmed above. This is stricter (misses counties if the page
+    # doesn't pair them with a state name) but trades recall for not
+    # fabricating data — consistent with this script's "leave unparsed
+    # rather than guess" policy.
+    county_matches = []
+    if found_states:
+        state_alternation = "|".join(re.escape(s) for s in found_states)
+        # Literal " " (not \s) for every internal gap: the newline inserted
+        # between distinct source elements (see get_text("\n", ...) above)
+        # must NOT satisfy these gaps, or unrelated text from a preceding
+        # element could bleed into the captured county name.
+        county_matches = re.findall(
+            rf"\b([A-Z][a-zA-Z]+(?: [A-Z][a-zA-Z]+)?) County, *(?:{state_alternation})\b",
+            text,
+        )
     if county_matches:
         seen = []
         for c in county_matches:
@@ -271,13 +298,22 @@ def main():
     else:
         summary_lines.append("No outbreak-data.json fields changed (either unparsed, or unchanged).\n")
 
+    # Distinguish "fetch failed" (network/HTTP error, cases_html is None)
+    # from "fetch succeeded but nothing parsed" (cases_html present, zero
+    # fields matched) -- the latter usually means the page's structure
+    # changed and the selectors need attention, not that the outbreak
+    # status is unchanged. Silently recording "ok"-looking history for
+    # this case would hide a broken scraper for weeks; see cases_page_degraded
+    # handling below, which fails the job so it's impossible to miss.
+    cases_page_degraded = cases_html is not None and not parsed_cases
+
     history = load_json(OUTBREAK_HISTORY_FILE, [])
     history_entry = {
         "date": today,
         "usCases": parsed_cases.get("usCases", outbreak_data.get("usCases")),
         "usStateCount": parsed_cases.get("usStateCount", outbreak_data.get("usStateCount")),
         "affectedCountyCount": len(parsed_cases.get("affectedCounties", outbreak_data.get("affectedCounties", []))),
-        "scrapeStatus": "ok" if parsed_cases else "failed",
+        "scrapeStatus": "ok" if parsed_cases else ("empty" if cases_html is not None else "failed"),
         "source": CONFIRMED_CASES_URL,
     }
     if not history or history[-1].get("date") != today:
@@ -327,8 +363,26 @@ def main():
     if github_output:
         with open(github_output, "a", encoding="utf-8") as f:
             f.write(f"changed={'true' if any_change else 'false'}\n")
+            f.write(f"parse_degraded={'true' if cases_page_degraded else 'false'}\n")
 
     log("Done. changed=" + str(any_change))
+
+    if cases_page_degraded:
+        # Fetch succeeded (HTTP 200) but zero fields parsed: almost
+        # certainly a page-structure change, not "nothing new to report."
+        # Fail the job so this shows up as a red workflow run instead of a
+        # quiet no-diff day -- all file writes above (history entry,
+        # publication stubs, pr-body.md, debug HTML) already happened, so
+        # nothing is lost by exiting non-zero here.
+        print(
+            "::error::Confirmed-cases page fetched successfully but zero "
+            "fields parsed (usCases/usStates/affectedCounties all empty). "
+            "The page structure likely changed -- check "
+            "scratch/last-fetch-confirmed-cases.html (uploaded as a "
+            "workflow artifact) before touching the selectors.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
