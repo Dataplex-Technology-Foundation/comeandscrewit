@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request: {}
+
+# Least privilege: this job only reads the repo and runs local checks, it
+# never needs to write anything or use a token for anything else.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned to the release commit SHA (not the mutable "v4" tag) so a
+      # compromised/re-pointed tag upstream can't silently change what
+      # runs here. Comment records the tag it corresponds to for humans.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r scripts/requirements.txt
+          pip install -r tests/requirements.txt
+
+      - name: Compile-check Python scripts
+        run: python3 -m py_compile scripts/*.py
+
+      - name: Validate workflow YAML
+        run: |
+          python3 - <<'EOF'
+          import sys
+          import yaml
+          from pathlib import Path
+
+          failed = False
+          for path in sorted(Path(".github/workflows").glob("*.yml")):
+              try:
+                  yaml.safe_load(path.read_text())
+                  print(f"OK: {path}")
+              except yaml.YAMLError as exc:
+                  print(f"INVALID: {path}\n{exc}")
+                  failed = True
+          sys.exit(1 if failed else 0)
+          EOF
+
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
