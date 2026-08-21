@@ -6,8 +6,6 @@
     "Texas"
   ],
   "usStateCount": 2,
-  "regionAnimalCases": "[VERIFY:185,000]",
-  "regionHumanCases": "[VERIFY:2,263]",
   "firstUsCase": "Zavala County, Texas \u2014 June 3, 2026",
   "affectedCounties": [
     "Brewster",
@@ -27,6 +25,5 @@
     "Uvalde",
     "Val Verde",
     "Zavala"
-  ],
-  "sterilePupaePerWeek": "[VERIFY:100M+]"
+  ]
 }

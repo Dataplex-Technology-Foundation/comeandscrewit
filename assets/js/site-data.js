@@ -4,8 +4,9 @@
    into the DOM. Edit the JSON file ONCE and every page updates
    automatically — no need to touch this script.
 
-   All figures are [VERIFY] — confirm against USDA-APHIS, CDC, and the Texas
-   Animal Health Commission (TAHC) on the publish date before going live.
+   If a data-outbreak key is missing from the JSON (e.g. a figure with no
+   verified source), the containing .stat-card is removed from the DOM
+   rather than showing an empty or broken tile.
    ========================================================================= */
 
 var OUTBREAK_DATA_URL = "assets/data/outbreak-data.json";
@@ -26,6 +27,12 @@ var OUTBREAK = {};
       if (Object.prototype.hasOwnProperty.call(data, key)) {
         var val = data[key];
         nodes[i].textContent = Array.isArray(val) ? val.join(", ") : val;
+      } else {
+        var card = nodes[i].closest(".stat-card");
+        if (card) {
+          card.parentNode.removeChild(card);
+        }
+        // otherwise leave the node's existing static content untouched
       }
     }
     // Also stamp any <time data-lastmod> elements for JSON-LD parity.
