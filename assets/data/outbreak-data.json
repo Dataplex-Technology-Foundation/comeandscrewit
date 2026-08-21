@@ -25,5 +25,24 @@
     "Uvalde",
     "Val Verde",
     "Zavala"
-  ]
+  ],
+  "countyCoordinates": {
+    "Brewster": { "state": "TX", "lat": 29.9199, "lon": -103.4530 },
+    "Crockett": { "state": "TX", "lat": 30.7096, "lon": -101.2043 },
+    "Edwards": { "state": "TX", "lat": 29.9760, "lon": -100.2140 },
+    "Gillespie": { "state": "TX", "lat": 30.2752, "lon": -98.8720 },
+    "Jim Hogg": { "state": "TX", "lat": 27.3097, "lon": -98.6836 },
+    "La Salle": { "state": "TX", "lat": 28.4394, "lon": -99.2350 },
+    "Lea": { "state": "NM", "lat": 32.9440, "lon": -103.3480 },
+    "Medina": { "state": "TX", "lat": 29.3466, "lon": -99.1414 },
+    "Pecos": { "state": "TX", "lat": 30.8909, "lon": -102.8790 },
+    "Schleicher": { "state": "TX", "lat": 30.8690, "lon": -100.6110 },
+    "Starr": { "state": "TX", "lat": 26.3798, "lon": -98.8203 },
+    "Sutton": { "state": "TX", "lat": 30.5652, "lon": -100.6460 },
+    "Terrell": { "state": "TX", "lat": 30.1424, "lon": -102.3930 },
+    "Tom Green": { "state": "TX", "lat": 31.4638, "lon": -100.4370 },
+    "Uvalde": { "state": "TX", "lat": 29.2100, "lon": -99.7862 },
+    "Val Verde": { "state": "TX", "lat": 29.3709, "lon": -100.8959 },
+    "Zavala": { "state": "TX", "lat": 28.6814, "lon": -99.8267 }
+  }
 }
