@@ -1,0 +1,10 @@
+[
+  {
+    "date": "2026-08-20",
+    "usCases": 46,
+    "usStateCount": 2,
+    "affectedCountyCount": 17,
+    "scrapeStatus": "ok",
+    "source": "https://www.aphis.usda.gov/animals/animal-health/livestock-and-poultry-disease/stop-screwworm/current-status/confirmed"
+  }
+]
