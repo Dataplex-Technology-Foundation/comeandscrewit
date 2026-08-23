@@ -167,11 +167,22 @@ def check_jekyll_exclusions(repo: Path, transitional: bool) -> None:
     } | {"_config.yml"}
     # Only git-tracked entries can reach the branch Pages builds from, so an
     # untracked or gitignored working-tree directory is not a finding.
-    tracked = subprocess.run(
+    proc = subprocess.run(
         ["git", "-C", str(repo), "ls-files", "-z"],
         capture_output=True, text=True, check=False,
-    ).stdout.split("\0")
-    top_level = sorted({t.split("/", 1)[0] for t in tracked if t})
+    )
+    tracked = [t for t in proc.stdout.split("\0") if t]
+    # Fail closed. If git is unavailable or reports nothing, this check has no
+    # basis to pass on -- and passing would mean asserting the Jekyll build is
+    # safe without having looked. An empty tracked set is never legitimate here.
+    if proc.returncode != 0 or not tracked:
+        fail(
+            "cannot enumerate tracked files "
+            f"(git exit {proc.returncode}, {len(tracked)} paths); refusing to "
+            "assert that _config.yml excludes everything internal"
+        )
+        return
+    top_level = sorted({t.split("/", 1)[0] for t in tracked})
     for name in top_level:
         if name.startswith(".") or name in publish_set or name in excluded:
             continue

@@ -51,3 +51,44 @@ jobs:
 
       - name: Run tests
         run: python3 -m unittest discover -s tests -v
+
+      # The publish boundary, enforced at review time rather than at deploy
+      # time. Same script publish.yml runs, so the two cannot disagree about
+      # what is publishable.
+      - name: Gate the publish boundary
+        run: python3 scripts/0005_build_site_artifact.py --check
+
+      # A gate that never fails is not a gate. Prove it rejects the three ways
+      # internal content can reach the artifact, on every pull request.
+      - name: Prove the gate rejects known bypasses
+        run: |
+          set -u
+          root=$(mktemp -d)
+          cp -r . "$root/repo"
+          cd "$root/repo"
+
+          expect_fail() {
+            if python3 scripts/0005_build_site_artifact.py --check >/dev/null 2>&1; then
+              echo "::error::gate ACCEPTED a tree it must reject: $1"
+              exit 1
+            fi
+            echo "gate correctly rejects: $1"
+          }
+
+          # 1. An internal file misfiled into the publish root.
+          echo internal > LEAK-TEST.md && git add -f LEAK-TEST.md 2>/dev/null || true
+          expect_fail "an unexcluded .md at the repo root"
+          rm -f LEAK-TEST.md && git rm -q --cached LEAK-TEST.md 2>/dev/null || true
+
+          # 2. A symlink out of the publish root. upload-pages-artifact runs
+          #    tar --dereference, so this would publish whatever it points at.
+          mkdir -p internal-target && echo secret > internal-target/x.md
+          ln -s ../internal-target assets/escape
+          expect_fail "a symlink escaping the publish root"
+          rm -f assets/escape
+
+          # 3. A placeholder back in a machine-consumed URL context.
+          sed -i 's|<link rel="canonical" href="https://comeandscrewit.com/faq.html">|<link rel="canonical" href="https://[DOMAIN]/faq.html">|' faq.html
+          expect_fail "an unreplaced [DOMAIN] in rel=canonical"
+
+          echo "all bypass attempts rejected"
