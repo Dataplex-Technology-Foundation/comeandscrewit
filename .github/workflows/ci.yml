@@ -55,6 +55,26 @@ jobs:
       # The publish boundary, enforced at review time rather than at deploy
       # time. Same script publish.yml runs, so the two cannot disagree about
       # what is publishable.
+      # Every `uses:` in this repo must be pinned to a full commit SHA, so a
+      # re-pointed tag upstream cannot silently change what runs.
+      #
+      # This is a CI check rather than the repo's sha_pinning_required setting,
+      # which was enabled and then reverted: the platform control also applies to
+      # first-party composite actions' internal dependencies, and
+      # actions/upload-pages-artifact@v3 references actions/upload-artifact@v4
+      # unpinned. That made every Pages deploy fail. This check covers exactly
+      # what we control and nothing we do not.
+      - name: Require SHA-pinned actions
+        run: |
+          bad=$(grep -rnE '^\s*-?\s*uses:' .github/workflows/ \
+                | grep -vE 'uses:\s*\S+@[0-9a-f]{40}\s*(#.*)?$' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::unpinned action reference(s); pin to a full commit SHA with the tag in a comment"
+            echo "$bad"
+            exit 1
+          fi
+          echo "all $(grep -rcE '^\s*-?\s*uses:' .github/workflows/ | awk -F: '{s+=$2} END{print s}') action reference(s) are SHA-pinned"
+
       - name: Gate the publish boundary
         run: python3 scripts/0005_build_site_artifact.py --check
 
