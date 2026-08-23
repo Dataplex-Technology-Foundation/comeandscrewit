@@ -1,14 +1,13 @@
 name: Publish site
 
-# workflow_dispatch ONLY, deliberately, until the Pages cutover completes.
-#
-# Pages is still on build_type: legacy. If this workflow ran on push while that
-# is true, actions/deploy-pages would hard-fail ("Failed to create deployment
-# (status: 404) ... Ensure GitHub Pages has been enabled"), leaving a failed
-# deployment record and a red main before the cutover had a chance to run.
-# scripts/0007_cutover_pages.sh flips the build type, dispatches this workflow,
-# waits for it to succeed, and only then is the push: trigger added.
+# The cutover is complete: Pages is on build_type: workflow, so this workflow is
+# the only thing that can publish to comeandscrewit.com. The push: trigger was
+# deliberately withheld until now -- under the previous build_type: legacy it
+# would have made deploy-pages hard-fail ("Ensure GitHub Pages has been
+# enabled"), leaving a failed deployment and a red main before the cutover ran.
 on:
+  push:
+    branches: [main]
   workflow_dispatch: {}
 
 # Least privilege. This job reads the repo and publishes an artifact; it holds
