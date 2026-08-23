@@ -33,7 +33,7 @@ jobs:
       - name: Check for changes
         id: diff
         run: |
-          if git diff --quiet -- internal/internal/reference/nws-grand-challenge-rankings.md internal/internal/reference/nws-grand-challenge-rankings-history.json; then
+          if git diff --quiet -- internal/reference/nws-grand-challenge-rankings.md internal/reference/nws-grand-challenge-rankings-history.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"

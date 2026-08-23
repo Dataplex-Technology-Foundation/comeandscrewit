@@ -151,7 +151,12 @@ edits = {
 for path, pairs in edits.items():
     f = pathlib.Path(path)
     text = f.read_text(); before = text
-    for old, new in pairs:
+    # Longest `old` first. Otherwise a short pair re-matches inside text a long
+    # pair already rewrote and prefixes it twice -- which is exactly how
+    # weekly-project-rankings.yml ended up with a `git diff --` filter pointing
+    # at internal/internal/reference/, matching nothing, so the job reported
+    # success while discarding every regenerated ranking.
+    for old, new in sorted(pairs, key=lambda pr: len(pr[0]), reverse=True):
         if new in text and old not in text:
             continue                      # already applied
         text = text.replace(old, new)
