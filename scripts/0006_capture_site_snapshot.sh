@@ -36,6 +36,8 @@ cd "$repo_root" || exit 1
 
 is_published() {
   case "$1" in
+    site/*) return 0 ;;
+    # Pre-reorg layout, kept so the script still works against older commits.
     *.html|assets/*|CNAME|favicon.svg|robots.txt|site.webmanifest|sitemap.xml) return 0 ;;
     *) return 1 ;;
   esac

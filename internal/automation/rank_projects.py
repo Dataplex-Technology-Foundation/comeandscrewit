@@ -31,10 +31,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-TRACKER_FILE = REPO_ROOT / "reference" / "nws-grand-challenge-tracker.md"
-RANKINGS_FILE = REPO_ROOT / "reference" / "nws-grand-challenge-rankings.md"
-RANKINGS_HISTORY_FILE = REPO_ROOT / "reference" / "nws-grand-challenge-rankings-history.json"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SITE_ROOT = REPO_ROOT / "site"
+INTERNAL_ROOT = REPO_ROOT / "internal"
+TRACKER_FILE = INTERNAL_ROOT / "reference" / "nws-grand-challenge-tracker.md"
+RANKINGS_FILE = INTERNAL_ROOT / "reference" / "nws-grand-challenge-rankings.md"
+RANKINGS_HISTORY_FILE = INTERNAL_ROOT / "reference" / "nws-grand-challenge-rankings-history.json"
 
 PROJECT_HEADER_RE = re.compile(r"^### (?P<id>\S+)\s+—\s+(?P<recipient>.+)$", re.MULTILINE)
 

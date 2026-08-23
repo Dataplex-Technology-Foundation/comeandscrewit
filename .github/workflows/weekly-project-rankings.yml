@@ -28,12 +28,12 @@ jobs:
           python-version: "3.12"
 
       - name: Run ranking script
-        run: python3 scripts/rank_projects.py
+        run: python3 internal/automation/rank_projects.py
 
       - name: Check for changes
         id: diff
         run: |
-          if git diff --quiet -- reference/nws-grand-challenge-rankings.md reference/nws-grand-challenge-rankings-history.json; then
+          if git diff --quiet -- internal/internal/reference/nws-grand-challenge-rankings.md internal/internal/reference/nws-grand-challenge-rankings-history.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -48,10 +48,10 @@ jobs:
           delete-branch: true
           title: "Automated project rankings refresh — ${{ github.run_id }}"
           body: |
-            Regenerated `reference/nws-grand-challenge-rankings.md` from the
-            current state of `reference/nws-grand-challenge-tracker.md`, and
+            Regenerated `internal/reference/nws-grand-challenge-rankings.md` from the
+            current state of `internal/reference/nws-grand-challenge-tracker.md`, and
             appended this week's top-5 lists to
-            `reference/nws-grand-challenge-rankings-history.json` for
+            `internal/reference/nws-grand-challenge-rankings-history.json` for
             trend-over-time tracking.
 
             Rankings are derived signals (disclosed award size, and an
@@ -59,5 +59,5 @@ jobs:
             other automated data update in this repo.
           labels: automated-data-refresh
           add-paths: |
-            reference/nws-grand-challenge-rankings.md
-            reference/nws-grand-challenge-rankings-history.json
+            internal/reference/nws-grand-challenge-rankings.md
+            internal/reference/nws-grand-challenge-rankings-history.json

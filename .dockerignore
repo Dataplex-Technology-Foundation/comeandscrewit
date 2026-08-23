@@ -1,0 +1,6 @@
+# The build context is the repo root so the Dockerfile can COPY site/.
+# Without this, every build also ships .git and the whole internal tree as
+# context. Only site/ and the nginx config are needed.
+*
+!site
+!internal/container/nginx.conf

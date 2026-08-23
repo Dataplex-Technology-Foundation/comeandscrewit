@@ -1,0 +1,13 @@
+# Build context is the repo root, so the Dockerfile can COPY site/.
+# Both `context:` and `dockerfile:` are required -- with only `context: ../..`,
+# Compose looks for a Dockerfile at the context root, where there is none.
+services:
+  screwworm-site:
+    build:
+      context: ../..
+      dockerfile: internal/container/Dockerfile
+    image: screwworm-site:latest
+    container_name: screwworm-site
+    ports:
+      - "8093:80"
+    restart: unless-stopped
