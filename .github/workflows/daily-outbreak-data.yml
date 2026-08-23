@@ -28,22 +28,22 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r scripts/requirements.txt
+        run: pip install -r internal/automation/requirements.txt
 
       - name: Run scraper
         id: scrape
         # Continue past a failure: the script still writes every file it
         # managed to produce before exiting non-zero on a degraded parse
-        # (see scripts/scrape_outbreak_data.py). We want that partial
+        # (see internal/automation/scrape_outbreak_data.py). We want that partial
         # output PR'd for review AND the job to end red for visibility, so
         # we capture the failure and re-raise it after the later steps run.
         continue-on-error: true
-        run: python3 scripts/scrape_outbreak_data.py
+        run: python3 internal/automation/scrape_outbreak_data.py
 
       - name: Check for changes
         id: diff
         run: |
-          if git diff --quiet -- assets/data reference; then
+          if git diff --quiet -- site/assets/data internal/reference; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -60,9 +60,9 @@ jobs:
           body-path: scratch/pr-body.md
           labels: automated-data-refresh
           add-paths: |
-            assets/data/outbreak-data.json
-            assets/data/outbreak-history.json
-            reference/screwworm-gov-research-publications.md
+            site/assets/data/outbreak-data.json
+            site/assets/data/outbreak-history.json
+            internal/reference/screwworm-gov-research-publications.md
 
       - name: Upload debug HTML (for selector troubleshooting on parse failures)
         if: always()

@@ -60,8 +60,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-DATA_FILE = REPO_ROOT / "assets" / "data" / "outbreak-data.json"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SITE_ROOT = REPO_ROOT / "site"
+INTERNAL_ROOT = REPO_ROOT / "internal"
+DATA_FILE = SITE_ROOT / "assets" / "data" / "outbreak-data.json"
 
 # Per-field source checklist. Each field names which source(s) a human must
 # consult and cross-check before entering a real value. This is descriptive

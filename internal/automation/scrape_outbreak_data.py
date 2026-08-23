@@ -69,10 +69,12 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-OUTBREAK_DATA_FILE = REPO_ROOT / "assets" / "data" / "outbreak-data.json"
-OUTBREAK_HISTORY_FILE = REPO_ROOT / "assets" / "data" / "outbreak-history.json"
-PUBLICATIONS_FILE = REPO_ROOT / "reference" / "screwworm-gov-research-publications.md"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SITE_ROOT = REPO_ROOT / "site"
+INTERNAL_ROOT = REPO_ROOT / "internal"
+OUTBREAK_DATA_FILE = SITE_ROOT / "assets" / "data" / "outbreak-data.json"
+OUTBREAK_HISTORY_FILE = SITE_ROOT / "assets" / "data" / "outbreak-history.json"
+PUBLICATIONS_FILE = INTERNAL_ROOT / "reference" / "screwworm-gov-research-publications.md"
 SCRATCH_DIR = REPO_ROOT / "scratch"
 
 CONFIRMED_CASES_URL = (

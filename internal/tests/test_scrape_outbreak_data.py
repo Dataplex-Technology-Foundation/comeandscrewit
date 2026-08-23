@@ -1,5 +1,5 @@
 """
-Regression tests for scripts/scrape_outbreak_data.py.
+Regression tests for internal/automation/scrape_outbreak_data.py.
 
 Deliberately narrow: these lock in two specific bugs found during manual
 testing (DTS-806 follow-up) so they can't silently regress. Not a general
@@ -11,7 +11,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "automation"))
 
 import scrape_outbreak_data as m  # noqa: E402
 

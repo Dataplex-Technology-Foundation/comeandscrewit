@@ -1,8 +1,0 @@
-services:
-  screwworm-site:
-    build: .
-    image: screwworm-site:latest
-    container_name: screwworm-site
-    ports:
-      - "8093:80"
-    restart: unless-stopped

@@ -34,6 +34,8 @@ QUIET="${2:-}"
 # ROOT_MODE_PATTERNS / ROOT_MODE_DIRS in scripts/0005_build_site_artifact.py.
 is_published() {
   case "$1" in
+    site/*) return 0 ;;
+    # Pre-reorg layout, kept so the script still works against older commits.
     *.html|assets/*|CNAME|favicon.svg|robots.txt|site.webmanifest|sitemap.xml) return 0 ;;
     *) return 1 ;;
   esac
@@ -42,7 +44,15 @@ is_published() {
 # Where each non-published path goes in the target layout.
 destination() {
   case "$1" in
-    README.md)                     echo "internal/docs/deployment.md" ;;
+    # Pre-reorg, README.md was a deployment runbook and moved to
+    # internal/docs/deployment.md. The current README.md is the repo's
+    # orientation doc and stays put; so do the other repo-level files.
+    README.md|CONTRIBUTING.md|.dockerignore|_config.yml)
+                                   if [ -f internal/docs/deployment.md ]; then
+                                     echo "${1}  (repo-level, stays)"
+                                   else
+                                     echo "internal/docs/deployment.md"
+                                   fi ;;
     docs/adr/*)                    echo "internal/${1}" ;;
     reference/*)                   echo "internal/${1}" ;;
     scripts/[0-9][0-9][0-9][0-9]_*)
@@ -54,7 +64,6 @@ destination() {
                                    echo "internal/container/${1}" ;;
     internal/*)                    echo "${1}  (already in place)" ;;
     .github/*|.gitignore)          echo "${1}  (unchanged)" ;;
-    _config.yml)                   echo "DELETED after cutover (transitional)" ;;
     *)                             echo "*** NO DESTINATION DEFINED ***" ;;
   esac
 }
