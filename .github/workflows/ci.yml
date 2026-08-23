@@ -75,6 +75,29 @@ jobs:
           fi
           echo "all $(grep -rcE '^\s*-?\s*uses:' .github/workflows/ | awk -F: '{s+=$2} END{print s}') action reference(s) are SHA-pinned"
 
+      # Every path a scheduled workflow filters on must exist. A stale or
+      # malformed path here fails SILENTLY GREEN: `git diff --quiet -- <bad>`
+      # matches nothing, so changed=false, no PR opens, the scraped data is
+      # discarded, and the job succeeds. That is strictly worse than a crash.
+      - name: Workflow data paths must exist
+        run: |
+          bad=0
+          # Paths in `git diff --quiet -- ...` filters
+          # Scoped to the scheduled workflows. Scanning ci.yml would match this
+          # step's own comment text and grep pattern.
+          SCHEDULED=".github/workflows/daily-outbreak-data.yml .github/workflows/weekly-project-rankings.yml"
+          for p in $(grep -hoE 'git diff --quiet -- [^;]+' $SCHEDULED \
+                     | sed 's/git diff --quiet -- //'); do
+            [ -e "$p" ] || { echo "::error::workflow git-diff filter path does not exist: $p"; bad=1; }
+          done
+          # Paths in create-pull-request `add-paths:` blocks
+          for p in $(awk '/add-paths:/{f=1;next} f&&/^ *[a-zA-Z0-9_.\/-]+$/{print $1;next} f{f=0}' \
+                     $SCHEDULED); do
+            [ -e "$p" ] || { echo "::error::workflow add-paths entry does not exist: $p"; bad=1; }
+          done
+          [ "$bad" -eq 0 ] && echo "all workflow data paths resolve"
+          exit $bad
+
       - name: Gate the publish boundary
         run: python3 scripts/0005_build_site_artifact.py --check
 
