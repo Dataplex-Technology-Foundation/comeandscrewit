@@ -36,6 +36,9 @@ DOMAIN="comeandscrewit.com"
 SNAP="${SNAP:-artifacts}"
 MODE="${1:-}"
 
+# --verify-only re-runs just the baseline comparison, for when the cutover
+# itself succeeded but verification needs repeating.
+
 say() { printf '\n== %s\n' "$*"; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
@@ -71,6 +74,12 @@ EOF
   exit 0
 fi
 
+if [ "$MODE" = "--verify-only" ]; then
+  verify_only=1
+else
+  verify_only=0
+fi
+
 # -------------------------------------------------------------- preconditions
 say "Preconditions"
 current="$(build_type)"
@@ -93,8 +102,14 @@ if [ "$MODE" = "--dry-run" ]; then
   exit 0
 fi
 
+if [ "$verify_only" = 1 ]; then
+  say "Verify-only: skipping flip, settle and dispatch"
+fi
+
 # ------------------------------------------------------------------- 1. flip
-if [ "$current" = "workflow" ]; then
+if [ "$verify_only" = 1 ]; then
+  :
+elif [ "$current" = "workflow" ]; then
   say "build_type is already 'workflow' -- skipping the flip"
 else
   say "Switching build_type to workflow (sending cname explicitly)"
@@ -111,6 +126,7 @@ fi
 # ------------------------------------------------------------------- 2. settle
 say "Waiting for Pages to settle"
 for i in $(seq 1 20); do
+  [ "$verify_only" = 1 ] && break
   st="$(pages_field status)"
   echo "   [$i] status=$st"
   case "$st" in built|"") break ;; esac
@@ -119,6 +135,9 @@ done
 
 # ---------------------------------------------------------------- 3. dispatch
 say "Dispatching publish.yml and waiting for it"
+if [ "$verify_only" = 1 ]; then
+  echo "   skipped (--verify-only)"
+else
 gh workflow run publish.yml --ref main || die "could not dispatch publish.yml"
 sleep 8
 run_id=$(gh run list --workflow=publish.yml --limit 1 --json databaseId --jq '.[0].databaseId')
@@ -131,6 +150,7 @@ if ! gh run watch "$run_id" --exit-status >/dev/null 2>&1; then
   die "cutover aborted; Pages restored to the branch build"
 fi
 echo "   publish.yml succeeded"
+fi
 
 # ------------------------------------------------------------------ 4. verify
 say "Verifying against the baseline"
@@ -138,6 +158,7 @@ sleep 15
 fail=0
 
 while IFS=$'\t' read -r path want; do
+  [ "$path" = "/" ] && path=""          # the site root, recorded as a literal "/"
   code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$SITE/$path")
   got=$(curl -sS --max-time 20 "$SITE/$path" | sha256sum | cut -d' ' -f1)
   if [ "$code" != "200" ]; then

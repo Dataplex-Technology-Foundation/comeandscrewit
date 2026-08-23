@@ -54,16 +54,22 @@ for f in "${published[@]}"; do
   # CNAME is excluded from the artifact and is 404 today; it belongs to the
   # other set, not this one.
   [ "$f" = "CNAME" ] && continue
-  body=$(curl -sS --max-time 20 "$SITE/$f")
   code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$SITE/$f")
   if [ "$code" != "200" ]; then
     printf '  WARNING %-44s %s (not 200 before cutover)\n' "/$f" "$code" >&2
     continue
   fi
-  printf '%s\t%s\n' "$f" "$(printf '%s' "$body" | sha256sum | cut -d' ' -f1)" >> "$OUT/expected-200.tsv"
+  # Hash by piping curl straight into sha256sum. Capturing the body in a
+  # variable first would strip its trailing newline (command substitution
+  # does), and the verifier does not -- so every single file would then
+  # compare as changed. That false alarm fired on the first cutover.
+  printf '%s\t%s\n' "$f" "$(curl -sS --max-time 20 "$SITE/$f" | sha256sum | cut -d' ' -f1)" >> "$OUT/expected-200.tsv"
 done
 # The bare root is served from index.html and must be checked in its own right.
-printf '%s\t%s\n' "" "$(curl -sS --max-time 20 "$SITE/" | sha256sum | cut -d' ' -f1)" >> "$OUT/expected-200.tsv"
+# It is recorded as the literal "/" rather than an empty field: `read` strips
+# leading IFS whitespace, so a leading tab would shift the checksum into the
+# path column and the verifier would probe a URL named after a hash.
+printf '%s\t%s\n' "/" "$(curl -sS --max-time 20 "$SITE/" | sha256sum | cut -d' ' -f1)" >> "$OUT/expected-200.tsv"
 
 # ---------------------------------------------------------------- expected 404
 {
