@@ -87,6 +87,14 @@ jobs:
           cp -r . "$root/repo"
           cd "$root/repo"
 
+          # The publish root, detected the same way the gate detects it, so
+          # these probes stay aimed at the right place across layout changes.
+          # Before the site/ reorg this was the repo root; a test hardcoded to
+          # the old shape passes vacuously afterwards, because a stray file
+          # outside the publish root is exactly what is supposed to be ignored.
+          if [ -d site ]; then PUB=site; else PUB=.; fi
+          echo "publish root under test: $PUB"
+
           expect_fail() {
             if python3 scripts/0005_build_site_artifact.py --check >/dev/null 2>&1; then
               echo "::error::gate ACCEPTED a tree it must reject: $1"
@@ -95,20 +103,31 @@ jobs:
             echo "gate correctly rejects: $1"
           }
 
-          # 1. An internal file misfiled into the publish root.
-          echo internal > LEAK-TEST.md && git add -f LEAK-TEST.md 2>/dev/null || true
-          expect_fail "an unexcluded .md at the repo root"
-          rm -f LEAK-TEST.md && git rm -q --cached LEAK-TEST.md 2>/dev/null || true
+          # 1. Internal content misfiled into the publish root.
+          echo internal > "$PUB/LEAK-TEST.md"
+          expect_fail "an unpublishable .md inside the publish root"
+          rm -f "$PUB/LEAK-TEST.md"
 
-          # 2. A symlink out of the publish root. upload-pages-artifact runs
-          #    tar --dereference, so this would publish whatever it points at.
+          # 2. A symlink escaping the publish root. upload-pages-artifact runs
+          #    tar --dereference, so this would publish the whole target. It
+          #    defeats both layers otherwise: the directory check sees a path
+          #    inside the root, the extension check sees no extension.
           mkdir -p internal-target && echo secret > internal-target/x.md
-          ln -s ../internal-target assets/escape
+          ln -s ../../internal-target "$PUB/assets/escape"
           expect_fail "a symlink escaping the publish root"
-          rm -f assets/escape
+          rm -f "$PUB/assets/escape"
 
-          # 3. A placeholder back in a machine-consumed URL context.
-          sed -i 's|<link rel="canonical" href="https://comeandscrewit.com/faq.html">|<link rel="canonical" href="https://[DOMAIN]/faq.html">|' faq.html
+          # 3. The publish root is itself a symlink. `find $PUB/ -type l`
+          #    dereferences its own start point, so this slips past a check
+          #    written with a trailing slash.
+          if [ "$PUB" = site ]; then
+            mv site site_real && ln -s site_real site
+            expect_fail "the publish root itself being a symlink"
+            rm -f site && mv site_real site
+          fi
+
+          # 4. A placeholder back in a machine-consumed URL.
+          sed -i 's|<link rel="canonical" href="https://comeandscrewit.com/faq.html">|<link rel="canonical" href="https://[DOMAIN]/faq.html">|' "$PUB/faq.html"
           expect_fail "an unreplaced [DOMAIN] in rel=canonical"
 
           echo "all bypass attempts rejected"
