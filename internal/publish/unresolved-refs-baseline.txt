@@ -1,0 +1,16 @@
+about.html	/assets/img/og-default.png
+contact.html	/assets/img/og-default.png
+donate.html	/assets/img/og-default.png
+faq.html	/assets/img/og-default.png
+for-ranchers.html	/assets/img/og-default.png
+index.html	/assets/img/og-default.png
+new-world-screwworm.html	/assets/img/og-default.png
+our-approach.html	/assets/img/og-default.png
+outbreak-status.html	/assets/img/og-default.png
+partners-and-investors.html	/assets/img/og-default.png
+screwworm-in-cattle.html	/assets/img/og-default.png
+screwworm-in-pets-and-humans.html	/assets/img/og-default.png
+site.webmanifest	/assets/img/icon-192.png
+site.webmanifest	/assets/img/icon-512.png
+sterile-insect-technique.html	/assets/img/og-default.png
+take-action.html	/assets/img/og-default.png
