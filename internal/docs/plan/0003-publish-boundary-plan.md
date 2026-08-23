@@ -1,6 +1,6 @@
-# Plan 0003 — Publish boundary for comeandscrewit.com (v3)
+# Plan 0003 — Publish boundary for comeandscrewit.com (v4)
 
-Status: **REVISED after two failed reviews.** Supersedes v1 (`0001-…`) and v2 (`0002-…`).
+Status: **REVISED after three failed reviews.** v4 closes the two blockers raised against v3 (B-1 hand-maintained disposition, B-2 missing `run:` path references) plus SF-A..E. Supersedes v1 (`0001-…`) and v2 (`0002-…`).
 Record: `review-findings.md`.
 Date: 2026-08-23 · Repo: `Dataplex-Technology-Foundation/comeandscrewit` (single, public)
 
@@ -96,35 +96,44 @@ in the new root `README.md`, in `CONTRIBUTING.md`, and in the gate's failure mes
 Pages API setting and a `CNAME` file is ignored. It is 404 today; shipping it would create a new
 public URL. `0007` asserts the API `cname` instead.
 
-### 5.1 Disposition of all 47 tracked paths
+### 5.1 Disposition — generated, never written by hand
 
-Restored from v1. Dropping this table in v2 is the direct cause of the `assets/img/README.md`
-site-down blocker, and of an incomplete rename set. Every path appears exactly once.
+`scripts/0002_exposure_inventory.sh --disposition` maps every tracked path to its
+destination and whether it is published, derived from `git ls-files`. It reports
+`*** NO DESTINATION DEFINED ***` for anything unaccounted for.
 
-| Current | Destination | Published? |
-|---|---|---|
-| 15 × `*.html` | `site/*.html` | **yes** |
-| `assets/css/styles.css` | `site/assets/css/styles.css` | **yes** |
-| `assets/js/{main,outbreak-map,site-data}.js` | `site/assets/js/` | **yes** |
-| `assets/data/{outbreak-data,outbreak-history}.json` | `site/assets/data/` | **yes** |
-| `CNAME` | `site/CNAME` | no — excluded from artifact |
-| `favicon.svg`, `robots.txt`, `site.webmanifest`, `sitemap.xml` | `site/` | **yes** |
-| `README.md` | `internal/docs/deployment.md` | no |
-| `docs/adr/0001-*.md` | `internal/docs/adr/0001-*.md` | no |
-| `reference/` — 5 `.md` + `nws-grand-challenge-rankings-history.json` | `internal/reference/` | no |
-| `scripts/{rank_projects,refresh-outbreak-data,scrape_outbreak_data}.py` | `internal/automation/` | no |
-| `scripts/requirements.txt` | `internal/automation/requirements.txt` | no |
-| `tests/test_scrape_outbreak_data.py`, `tests/requirements.txt` | `internal/tests/` | no |
-| `Dockerfile`, `nginx.conf`, `docker-compose.yml` | `internal/container/` | no |
-| `.github/workflows/{ci,daily-outbreak-data,weekly-project-rankings}.yml` | unchanged path, paths inside updated | no |
-| `.gitignore` | unchanged | no |
-| *(PR-0)* `assets/img/README.md` | `internal/docs/image-assets.md` | **done** |
-| — | `site/assets/img/` (empty; see below) | n/a |
-| — | new `README.md`, `CONTRIBUTING.md`, `publish.yml`, `scripts/00NN_*` | no |
+**No prose table replaces it, and this document deliberately states no path count.**
+A hand-maintained list has now been wrong three times in three drafts, each time in the
+section rewritten to fix the previous failure: v1 listed 13 of 25 exposed URLs and its
+acceptance criterion inherited the undercount; v2 deleted the table, which is how a `.md`
+inside the asset tree became a site-down risk at cutover; v3 restored it and still omitted
+`internal/docs/removed-content-inventory.md` — a file whose publication would have restored,
+at a canonical-tagged URL, the verbatim disclosure this work exists to remove. The list is
+not something a human keeps correct, so nothing downstream reads one.
+
+**PR-0 additionally makes the exposure close on merge rather than at cutover.** Because
+Pages still builds with Jekyll, every tracked non-dot-prefixed path is published — so PR-0
+adding an inventory of the removed notes would have published them. `_config.yml` now
+excludes every internal path, and `scripts/0005`'s `check_jekyll_exclusions()` fails if any
+tracked top-level path is neither in the publish set nor excluded, naming the URL it would
+appear at. `_config.yml` is a denylist, which this plan argues against; it is transitional,
+it is the only control available before the cutover, and it is deleted once the cutover is
+verified.
 
 `site/assets/img/` will be empty. `upload-pages-artifact` runs `--exclude=.[^/]*`, so a
-`.gitkeep` is stripped from the artifact anyway — the directory simply will not exist there,
-which is harmless since all four referenced images are missing regardless (§9.2).
+`.gitkeep` is stripped from the artifact anyway.
+
+### 5.1a Why moving the tree cannot break a link
+
+References are **either document-relative or root-absolute**, and both resolve identically
+because the artifact root remains the domain root. (v1 claimed "no absolute-path references"
+and labelled it verified; it is false — `404.html` has 12 and `site.webmanifest` has 3.) The
+property that actually needs guarding is the absence of `../` traversal, currently zero,
+which the gate checks.
+
+Constraint on future pages: `site-data.js:12` and `outbreak-map.js:41` fetch
+`assets/data/outbreak-data.json` document-relative, so they resolve correctly only while
+every page sits at root depth. A nested page would break them.
 
 ### 5.2 Path constants — eleven, across three scripts
 
@@ -140,9 +149,18 @@ v2's prose said "eight" while its own table listed eleven. Eleven is correct; al
 `SITE_ROOT = REPO_ROOT/"site"`, `INTERNAL_ROOT = REPO_ROOT/"internal"`, `SCRATCH_DIR` stays at
 `REPO_ROOT/"scratch"` (matches `body-path: scratch/pr-body.md` and `.gitignore`).
 
-**Five workflow path references** (v2 named two): `ci.yml:28` `scripts/requirements.txt`,
-`ci.yml:29` `tests/requirements.txt`, `ci.yml:32` `py_compile scripts/*.py`,
-`ci.yml:53` `unittest discover -s tests`, `daily-outbreak-data.yml:31` `scripts/requirements.txt`.
+**Seven workflow path references.** v2 named two; v3 named five and still missed the two
+`run:` lines that actually invoke the scripts — the ones that break hardest:
+`ci.yml:28` `scripts/requirements.txt`, `ci.yml:29` `tests/requirements.txt`,
+`ci.yml:32` `py_compile scripts/*.py`, `ci.yml:53` `unittest discover -s tests`,
+`daily-outbreak-data.yml:31` `scripts/requirements.txt`,
+**`daily-outbreak-data.yml:41` `run: python3 scripts/scrape_outbreak_data.py`**, and
+**`weekly-project-rankings.yml:31` `run: python3 scripts/rank_projects.py`**.
+
+Anchoring rewrites to "constant-assignment lines and YAML path blocks" does not cover a
+`run:` line, and nothing would catch the omission: `ci.yml` never executes the scheduled
+workflows, and the criteria that would are BLOCKED on R1. `daily:41` also carries
+`continue-on-error: true`, so the failure would surface only at the terminal `exit 1`.
 Plus the `git diff` filters (`daily:46`, `weekly:36`) and `add-paths` blocks
 (`daily:62-65`, `weekly:61-63`).
 
@@ -153,9 +171,13 @@ Rewrites are anchored to constant-assignment lines and the YAML path blocks. **N
 → data discarded → **job green**. §11 therefore asserts a seeded change produces a PR touching
 exact paths, never merely "runs green".
 
-**Expected first-run diff:** `rank_projects.py:134,194` and `scrape_outbreak_data.py:326,346`
-write `relative_to(REPO_ROOT)` strings into generated file *content*; these become
-`internal/reference/…`. Pre-declared so it is not read as a byte-identity violation.
+**Expected first-run diff:** four `relative_to(REPO_ROOT)` calls write paths into generated
+file *content*. They do not all become the same thing, and v3 wrongly said they did:
+`rank_projects.py:134,194` and `scrape_outbreak_data.py:346` become `internal/reference/…`,
+but `scrape_outbreak_data.py:326` is `OUTBREAK_HISTORY_FILE`, which under
+`SITE_ROOT = REPO_ROOT/"site"` becomes **`site/assets/data/outbreak-history.json`**.
+A fifth site, `refresh-outbreak-data.py:246`, prints to stdout only and changes no file
+content. Pre-declared so none of it reads as a byte-identity violation.
 
 ### 5.3 Container
 
@@ -196,7 +218,11 @@ Failure messages name the path, the rule, and the remedy ("move it to `internal/
 v1 said 215; three reviewers measured 229/234/235 with different regexes. **The spread is the
 finding** — a scalar count is an artefact of its pattern. Hence no count is used as a baseline.
 
-**Tier A — hard fail, no baseline.** Scoped to exactly what PR-0 clears and keeps clear:
+**Tier A — hard fail, no baseline. Matched on attribute and property *values only*, never
+on whole lines.** `[OG IMAGE]` sits in an HTML comment on the same line as `og:image` on 14
+pages, and `[SOCIAL LINK]` shares a line with JSON-LD `url` and `logo` in 13 of 14 files. A
+line-scoped implementation would hard-fail 27 times on requester-blocked tokens. Scoped to
+exactly what PR-0 clears and keeps clear:
 `rel="canonical"`, `og:url`, `og:image`, `twitter:*`, `<loc>`, `robots.txt`'s `Sitemap:`, and
 JSON-LD `url`/`logo`/`mainEntityOfPage`.
 
@@ -312,7 +338,11 @@ reissue ("up to 24 hours"), not a one-minute rollback.
       `status: built`.
 - [ ] Tier-A placeholder count 0. *(Achievable: Tier A excludes the requester-blocked tokens.)*
 
-**No regression** — two disjoint sets from `0007`, which is why v2 could not pass its own criteria
+**No regression** — two disjoint sets from `0007`, which is why v2 could not pass its own criteria.
+`EXPECTED_200` is derived from `find site -type f` (post-reorg) or the publish-set patterns
+(pre-reorg) — **never from a live crawl**. A crawl picks up Jekyll-generated URLs with no
+tracked source, such as `/assets/css/style.css` from the default theme, which correctly
+disappear at cutover; putting them in `EXPECTED_200` would make the criterion unsatisfiable.
 - [ ] Every URL in `EXPECTED_200` returns 200 with **identical sha256** to the snapshot.
 - [ ] Every URL in `EXPECTED_404_AFTER_CUTOVER` (the 23 remaining exposed URLs + `/CNAME`)
       returns 404.
