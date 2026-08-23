@@ -1,0 +1,103 @@
+name: Publish site
+
+# workflow_dispatch ONLY, deliberately, until the Pages cutover completes.
+#
+# Pages is still on build_type: legacy. If this workflow ran on push while that
+# is true, actions/deploy-pages would hard-fail ("Failed to create deployment
+# (status: 404) ... Ensure GitHub Pages has been enabled"), leaving a failed
+# deployment record and a red main before the cutover had a chance to run.
+# scripts/0007_cutover_pages.sh flips the build type, dispatches this workflow,
+# waits for it to succeed, and only then is the push: trigger added.
+on:
+  workflow_dispatch: {}
+
+# Least privilege. This job reads the repo and publishes an artifact; it holds
+# no secret and parses no untrusted input. Note id-token: write mints a signed
+# OIDC token -- that is a credential, even though it is short-lived and not a
+# stored secret.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Pages allows one deployment at a time. Without this, two merges in quick
+# succession collide with "deployment already in progress".
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned to release commit SHAs, not mutable tags, so a re-pointed tag
+      # upstream cannot change what runs here. sha_pinning_required is enabled
+      # on this repo, so an unpinned uses: is rejected by the platform too.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      # The gate and the build are the same script CI runs on every pull
+      # request, so a violation fails review rather than reaching the deploy.
+      # It refuses to emit an artifact that breaks the publish boundary.
+      - name: Build and gate the site artifact
+        run: python3 scripts/0005_build_site_artifact.py --out _site
+
+      - name: Assert the artifact contains only the publish set
+        run: |
+          # Belt and braces against the build step being edited: independently
+          # verify nothing internal reached _site/ before it is uploaded.
+          if find _site -name '*.md' -o -name '*.py' -o -name '*.sh' -o -name '*.yml' | grep -q .; then
+            echo "::error::_site contains internal file types"
+            find _site \( -name '*.md' -o -name '*.py' -o -name '*.sh' -o -name '*.yml' \)
+            exit 1
+          fi
+          if find _site -type l | grep -q .; then
+            echo "::error::_site contains a symlink; upload-pages-artifact would dereference it"
+            exit 1
+          fi
+          echo "artifact file count: $(find _site -type f | wc -l)"
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+
+  notify-failure:
+    needs: [build, deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      # Without this the site goes stale silently -- the exact failure mode used
+      # to reject a generated-branch design, and the one that hid a three-day
+      # outbreak-data outage. Fail loudly instead.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Open an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Site publish failed — run ${{ github.run_id }}" \
+            --body "\`publish.yml\` failed on \`${{ github.sha }}\`. comeandscrewit.com is serving the last successful deployment and will stay stale until this is fixed.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
