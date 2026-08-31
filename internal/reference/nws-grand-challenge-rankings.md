@@ -1,7 +1,7 @@
 # NWS Grand Challenge — Top 5 Project Rankings
 
-Generated: 2026-08-20 (automated, see `scripts/rank_projects.py`)
-Derived from: `reference/nws-grand-challenge-tracker.md` (40 projects parsed)
+Generated: 2026-08-31 (automated, see `scripts/rank_projects.py`)
+Derived from: `internal/reference/nws-grand-challenge-tracker.md` (40 projects parsed)
 
 Two independent rankings — a project can appear in one, both, or neither.
 'Info density' is a proxy (source count + writeup length), not a
