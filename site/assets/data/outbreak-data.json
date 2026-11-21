@@ -1,11 +1,12 @@
 {
-  "lastUpdated": "August 20, 2026",
+  "lastUpdated": "November 21, 2026",
   "usCases": 46,
   "usStates": [
+    "Arizona",
     "New Mexico",
     "Texas"
   ],
-  "usStateCount": 2,
+  "usStateCount": 3,
   "firstUsCase": "Zavala County, Texas \u2014 June 3, 2026",
   "affectedCounties": [
     "Brewster",
@@ -27,22 +28,90 @@
     "Zavala"
   ],
   "countyCoordinates": {
-    "Brewster": { "state": "TX", "lat": 29.9199, "lon": -103.4530 },
-    "Crockett": { "state": "TX", "lat": 30.7096, "lon": -101.2043 },
-    "Edwards": { "state": "TX", "lat": 29.9760, "lon": -100.2140 },
-    "Gillespie": { "state": "TX", "lat": 30.2752, "lon": -98.8720 },
-    "Jim Hogg": { "state": "TX", "lat": 27.3097, "lon": -98.6836 },
-    "La Salle": { "state": "TX", "lat": 28.4394, "lon": -99.2350 },
-    "Lea": { "state": "NM", "lat": 32.9440, "lon": -103.3480 },
-    "Medina": { "state": "TX", "lat": 29.3466, "lon": -99.1414 },
-    "Pecos": { "state": "TX", "lat": 30.8909, "lon": -102.8790 },
-    "Schleicher": { "state": "TX", "lat": 30.8690, "lon": -100.6110 },
-    "Starr": { "state": "TX", "lat": 26.3798, "lon": -98.8203 },
-    "Sutton": { "state": "TX", "lat": 30.5652, "lon": -100.6460 },
-    "Terrell": { "state": "TX", "lat": 30.1424, "lon": -102.3930 },
-    "Tom Green": { "state": "TX", "lat": 31.4638, "lon": -100.4370 },
-    "Uvalde": { "state": "TX", "lat": 29.2100, "lon": -99.7862 },
-    "Val Verde": { "state": "TX", "lat": 29.3709, "lon": -100.8959 },
-    "Zavala": { "state": "TX", "lat": 28.6814, "lon": -99.8267 }
+    "Brewster": {
+      "state": "TX",
+      "lat": 29.9199,
+      "lon": -103.453
+    },
+    "Crockett": {
+      "state": "TX",
+      "lat": 30.7096,
+      "lon": -101.2043
+    },
+    "Edwards": {
+      "state": "TX",
+      "lat": 29.976,
+      "lon": -100.214
+    },
+    "Gillespie": {
+      "state": "TX",
+      "lat": 30.2752,
+      "lon": -98.872
+    },
+    "Jim Hogg": {
+      "state": "TX",
+      "lat": 27.3097,
+      "lon": -98.6836
+    },
+    "La Salle": {
+      "state": "TX",
+      "lat": 28.4394,
+      "lon": -99.235
+    },
+    "Lea": {
+      "state": "NM",
+      "lat": 32.944,
+      "lon": -103.348
+    },
+    "Medina": {
+      "state": "TX",
+      "lat": 29.3466,
+      "lon": -99.1414
+    },
+    "Pecos": {
+      "state": "TX",
+      "lat": 30.8909,
+      "lon": -102.879
+    },
+    "Schleicher": {
+      "state": "TX",
+      "lat": 30.869,
+      "lon": -100.611
+    },
+    "Starr": {
+      "state": "TX",
+      "lat": 26.3798,
+      "lon": -98.8203
+    },
+    "Sutton": {
+      "state": "TX",
+      "lat": 30.5652,
+      "lon": -100.646
+    },
+    "Terrell": {
+      "state": "TX",
+      "lat": 30.1424,
+      "lon": -102.393
+    },
+    "Tom Green": {
+      "state": "TX",
+      "lat": 31.4638,
+      "lon": -100.437
+    },
+    "Uvalde": {
+      "state": "TX",
+      "lat": 29.21,
+      "lon": -99.7862
+    },
+    "Val Verde": {
+      "state": "TX",
+      "lat": 29.3709,
+      "lon": -100.8959
+    },
+    "Zavala": {
+      "state": "TX",
+      "lat": 28.6814,
+      "lon": -99.8267
+    }
   }
 }
